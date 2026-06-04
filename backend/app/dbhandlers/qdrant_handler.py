@@ -1,5 +1,5 @@
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
+from qdrant_client.http.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue, FilterSelector
 
 from app.config import settings
 from app.constants import VECTOR_SIZE
@@ -83,3 +83,32 @@ class QdrantHandler:
                     "upload_timestamp": payload.get("upload_timestamp")
                 }
         return list(docs.values())
+
+    def delete_document(self, document_id: str, guest_id: str) -> int:
+        """Delete all chunks belonging to a document, scoped to a guest.
+
+        Returns the number of chunk-points deleted.
+        """
+        delete_filter = Filter(
+            must=[
+                FieldCondition(key="guest_id", match=MatchValue(value=guest_id)),
+                FieldCondition(key="document_id", match=MatchValue(value=document_id)),
+            ]
+        )
+
+        # Count matching points before deletion so we can report back
+        points, _ = self.client.scroll(
+            collection_name=self.collection,
+            scroll_filter=delete_filter,
+            limit=10000,
+            with_payload=False,
+        )
+        count = len(points)
+
+        if count > 0:
+            self.client.delete(
+                collection_name=self.collection,
+                points_selector=FilterSelector(filter=delete_filter),
+            )
+
+        return count
