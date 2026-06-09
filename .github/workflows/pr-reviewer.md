@@ -9,7 +9,9 @@ concurrency:
   group: pr-reviewer-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-engine: copilot
+engine: 
+    id: copilot
+    model: gpt-4o
 
 permissions:
   contents: read
