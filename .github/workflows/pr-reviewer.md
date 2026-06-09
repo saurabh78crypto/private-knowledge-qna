@@ -2,6 +2,15 @@
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - "*.lock"
+      - "package-lock.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+      - "*.min.js"
+      - "*.min.css"
+      - "dist/**"
+      - "build/**"
   pull_request_review_comment:
     types: [created]
 
@@ -9,9 +18,9 @@ concurrency:
   group: pr-reviewer-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-engine: 
-    id: copilot
-    model: gpt-4o
+engine:
+  id: copilot
+  model: gpt-4o
 
 permissions:
   contents: read
@@ -56,7 +65,7 @@ You are a senior engineer performing a thorough, constructive code review. Your 
 
 1. Read the PR title, description, and linked issue(s) if any.
 2. Fetch the full diff for PR #${{ github.event.pull_request.number }}.
-3. For each changed file, read the surrounding context (±20 lines around each hunk) to understand intent.
+3. Read the PR diff summary. If the total diff exceeds 500 lines, focus your review on the most critical files (auth, API routes, data models, config) and note that large files were skimmed rather than fully reviewed. Do NOT read files in a loop — make one pass.
 4. Check the PR details: if the PR is in draft state, call `noop` with message "Skipping draft PR — will review when ready".
 5. Check the PR author type: if the author is a bot (e.g. Dependabot, renovate-bot, or any login ending in `[bot]`), call `noop` with message "Skipping bot PR".
 
